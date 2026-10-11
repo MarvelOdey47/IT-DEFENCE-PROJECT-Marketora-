@@ -9,7 +9,7 @@
     <a class="btn" href="{{ url_for('products.product_create') }}"><i class="fa-solid fa-plus"></i> Add product</a>
 </div>
 
-<div class="stat-grid">
+<div class="stat-grid seller-stats">
     <div class="stat"><div class="ico"><i class="fa-solid fa-box-open"></i></div><div><div class="num">{{ product_count }}</div><div class="lbl">My products</div></div></div>
     <div class="stat"><div class="ico"><i class="fa-solid fa-receipt"></i></div><div><div class="num">{{ order_count }}</div><div class="lbl">Orders ({{ pending }} pending)</div></div></div>
     <div class="stat"><div class="ico"><i class="fa-solid fa-naira-sign"></i></div><div><div class="num">{{ revenue|naira }}</div><div class="lbl">Revenue</div></div></div>
@@ -19,15 +19,15 @@
 <div class="panel">
     <header><h2>Recent orders</h2><a href="{{ url_for('seller.orders') }}">View all</a></header>
     <div class="table-wrap">
-        <table class="data">
+        <table class="data stack">
             <thead><tr><th>Order</th><th>Items from you</th><th>Date</th><th>Status</th></tr></thead>
             <tbody>
             {% for o in recent_orders %}
                 <tr>
-                    <td><strong>{{ o.reference }}</strong></td>
-                    <td>{% for i in seller_items(o) %}{{ i.product.name[:30] }} &times; {{ i.quantity }}{{ ', ' if not loop.last }}{% endfor %}</td>
-                    <td>{{ o.created_at.strftime('%d %b %Y') if o.created_at }}</td>
-                    <td>{{ status_pill(o.status) }}</td>
+                    <td data-label="Order"><strong>{{ o.reference }}</strong></td>
+                    <td data-label="Items">{% for i in seller_items(o) %}{{ i.product.name[:30] }} &times; {{ i.quantity }}{{ ', ' if not loop.last }}{% endfor %}</td>
+                    <td data-label="Date">{{ o.created_at.strftime('%d %b %Y') if o.created_at }}</td>
+                    <td data-label="Status">{{ status_pill(o.status) }}</td>
                 </tr>
             {% else %}
                 <tr><td colspan="4" class="muted center" style="padding:24px">No orders yet.</td></tr>

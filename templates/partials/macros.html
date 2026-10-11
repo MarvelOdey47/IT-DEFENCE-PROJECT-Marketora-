@@ -76,24 +76,24 @@
 {# Manage-products table used by the seller (own products) and admin (all products) #}
 {% macro product_table(products, show_seller=False) %}
 <div class="table-wrap">
-<table class="data">
+<table class="data stack">
     <thead><tr><th>Product</th>{% if show_seller %}<th>Seller</th>{% endif %}<th>Price</th><th>Stock</th><th>Tags</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for p in products %}
         <tr>
-            <td>
+            <td class="c-product">
                 <div class="cell-product">
                     {% if p.image_url %}<img class="thumb-sm" src="{{ p.image_url }}" alt="">{% else %}<span class="thumb-sm"></span>{% endif %}
                     <div><a class="t" href="{{ url_for('products.product_detail', product_id=p.id) }}">{{ p.name[:48] }}</a>
                     <div class="muted small">{{ p.category.name if p.category else 'Uncategorised' }}</div></div>
                 </div>
             </td>
-            {% if show_seller %}<td>{{ p.seller.username }}</td>{% endif %}
-            <td class="nowrap">{{ p.price|naira }}{% if p.discount_percent >= 1 %}<div class="muted small">-{{ p.discount_percent }}%</div>{% endif %}</td>
-            <td>{% if p.stock <= 5 %}<span style="color:var(--danger);font-weight:700">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
-            <td>{% for t in p.tag_list %}<span class="chip">{{ PRODUCT_TAGS[t][0] }}</span> {% endfor %}</td>
-            <td>{{ status_pill('active' if p.is_active else 'cancelled') }}</td>
-            <td>
+            {% if show_seller %}<td data-label="Seller">{{ p.seller.username }}</td>{% endif %}
+            <td class="nowrap" data-label="Price">{{ p.price|naira }}{% if p.discount_percent >= 1 %}<div class="muted small">-{{ p.discount_percent }}%</div>{% endif %}</td>
+            <td data-label="Stock">{% if p.stock <= 5 %}<span style="color:var(--danger);font-weight:700">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
+            <td data-label="Tags" class="c-tags">{% for t in p.tag_list %}<span class="chip">{{ PRODUCT_TAGS[t][0] }}</span> {% endfor %}</td>
+            <td data-label="Status">{{ status_pill('active' if p.is_active else 'cancelled') }}</td>
+            <td class="c-actions">
                 <div class="row-actions">
                     <a class="btn btn-sm btn-ghost" href="{{ url_for('products.product_detail', product_id=p.id) }}" title="View"><i class="fa-solid fa-eye"></i></a>
                     <a class="btn btn-sm" href="{{ url_for('products.product_edit', product_id=p.id) }}" title="Edit"><i class="fa-solid fa-pen"></i></a>
