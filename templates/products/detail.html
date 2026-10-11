@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import stars, csrf, shelf with context %}
+
+{% block title %}{{ product.name }} - {{ BRAND }}{% endblock %}
+
+{% block content %}
+{% set images = product.image_list %}
+{% set is_customer = current_user.is_authenticated and current_user.role == 'customer' %}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a><span class="sep">/</span>
+    {% if product.category %}
+        {% if product.category.parent %}
+            <a href="{{ url_for('products.category_page', slug=product.category.parent.slug) }}">{{ product.category.parent.name }}</a><span class="sep">/</span>
+        {% endif %}
+        <a href="{{ url_for('products.category_page', slug=product.category.slug) }}">{{ product.category.name }}</a><span class="sep">/</span>
+    {% endif %}
+    <span>{{ product.name[:60] }}</span>
+</nav>
+
+{% if not product.is_active %}
+    <div class="flash warning"><i class="fa-solid fa-eye-slash"></i><span>This product is hidden from the store (archived).</span></div>
+{% endif %}
+
+<div class="pd">
+    {# ---------------- gallery carousel ---------------- #}
+    <div class="pd-box">
+        <div class="gallery" data-delay="30000">
+            <div class="gallery-thumbs">
+                {% for url in images %}
+                    <button type="button" aria-label="Image {{ loop.index }}"><img src="{{ url }}" alt=""></button>
+                {% endfor %}
+            </div>
+            <div class="gallery-main">
+                {% for url in images %}
+                    <div class="slide"><img src="{{ url }}" alt="{{ product.name }} - image {{ loop.index }}"></div>
+                {% else %}
+                    <div class="slide active"><i class="fa-regular fa-image" style="font-size:4rem;color:var(--muted)"></i></div>
+                {% endfor %}
+                <button type="button" class="g-nav prev" aria-label="Previous image"><i class="fa-solid fa-chevron-left"></i></button>
+                <button type="button" class="g-nav next" aria-label="Next image"><i class="fa-solid fa-chevron-right"></i></button>
+                <button type="button" class="autoplay" aria-label="Pause or play slideshow"><i class="fa-solid fa-pause"></i></button>
+                <span class="counter">1 / {{ images|length }}</span>
+                <div class="progress"></div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------------- details + buy box ---------------- #}
+    <div class="pd-box">
+        <h1>{{ product.name }}</h1>
+        <div class="meta-line">
+            {% if product.brand %}<span>Brand: <a href="{{ url_for('products.product_list', brand=product.brand) }}">{{ product.brand }}</a></span><span>|</span>{% endif %}
+            <span>{{ stars(product.rating) }}</span>
+            <a href="#reviews">({{ product.rating_count }} verified rating{{ 's' if product.rating_count != 1 }})</a>
+        </div>
+        {% if product.tag_list %}
+            <div class="chips">
+                {% for t in product.tag_list %}<span class="chip">{{ tag_names[t][0] }}</span>{% endfor %}
+            </div>
+        {% endif %}
+        <hr>
+        <div class="price-row">
+            <span class="price-lg">{{ product.price|naira }}</span>
+            {% if product.discount_percent >= 1 %}
+                <span class="old">{{ product.old_price|naira }}</span>
+                <span class="off">-{{ product.discount_percent }}%</span>
+            {% endif %}
+        </div>
+        <div class="muted small">+ delivery fee calculated at checkout</div>
+
+        {% if product.stock == 0 %}
+            <div class="stock-line low"><i class="fa-solid fa-circle-xmark"></i> Out of stock</div>
+        {% elif product.stock <= 5 %}
+            <div class="stock-line low"><i class="fa-solid fa-triangle-exclamation"></i> Only {{ product.stock }} unit{{ 's' if product.stock != 1 }} left</div>
+        {% else %}
+            <div class="stock-line ok"><i class="fa-solid fa-circle-check"></i> In stock</div>
+        {% endif %}
+
+        {% if is_customer %}
+            {% if product.stock > 0 and product.is_active %}
+            <form method="POST" action="{{ url_for('cart.cart_add', product_id=product.id) }}">
+                {{ csrf() }}
+                <div class="buy-row">
+                    <div class="qty-stepper">
+                        <button type="button" data-dec aria-label="Decrease">&minus;</button>
+                        <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}">
+                        <button type="button" data-inc aria-label="Increase">+</button>
+                    </div>
+                    <button type="submit" class="btn btn-lg"><i class="fa-solid fa-cart-plus"></i> Add to cart</button>
+                    <button type="submit" name="buy_now" value="1" class="btn btn-lg btn-outline">Buy now</button>
+                </div>
+            </form>
+            {% endif %}
+        {% elif not current_user.is_authenticated %}
+            <div class="buy-row">
+                <a class="btn btn-lg" href="{{ url_for('auth.login', next=url_for('products.product_detail', product_id=product.id)) }}">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign in to buy
+                </a>
+            </div>
+        {% elif not can_manage %}
+            <div class="flash info" style="margin-top:14px"><i class="fa-solid fa-circle-info"></i><span>{{ current_user.role|capitalize }} accounts can browse products but cannot place orders.</span></div>
+        {% endif %}
+
+        {% if can_manage %}
+        <div class="manage-box">
+            <strong><i class="fa-solid fa-sliders"></i> {{ 'Manage product (admin)' if current_user.role == 'admin' else 'Manage your product' }}</strong>
+            <div class="small muted">Sold by {{ product.seller.username }} &middot; {{ product.stock }} in stock</div>
+            <div class="actions">
+                <a class="btn btn-sm" href="{{ url_for('products.product_edit', product_id=product.id) }}"><i class="fa-solid fa-pen"></i> Edit</a>
+                <form method="POST" action="{{ url_for('products.product_delete', product_id=product.id) }}" class="inline-form"
+                      data-confirm='Are you sure you want to delete "{{ product.name }}"?'>
+                    {{ csrf() }}
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if product.feature_lines %}
+            <hr>
+            <h3>Key features</h3>
+            <ul class="feature-list">
+                {% for line in product.feature_lines[:8] %}<li>{{ line }}</li>{% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    {# ---------------- delivery / seller side card ---------------- #}
+    <div class="pd-box info-card info-card-col">
+        <h3>Delivery &amp; returns</h3>
+        <div class="row"><i class="fa-solid fa-truck-fast"></i><div><strong>Door delivery</strong><small>Delivered within 2 - 7 working days</small></div></div>
+        <div class="row"><i class="fa-solid fa-hand-holding-dollar"></i><div><strong>Pay on delivery</strong><small>Available in selected locations</small></div></div>
+        <div class="row"><i class="fa-solid fa-rotate-left"></i><div><strong>Return policy</strong><small>{{ product.return_policy or '7 days return policy' }}</small></div></div>
+        {% if product.warranty %}
+        <div class="row"><i class="fa-solid fa-shield-halved"></i><div><strong>Warranty</strong><small>{{ product.warranty }}</small></div></div>
+        {% endif %}
+        <hr>
+        <h3>Seller information</h3>
+        <div class="row">
+            <i class="fa-solid fa-store"></i>
+            <div>
+                <strong>{{ product.seller.username }}</strong>
+                {% if product.has_tag('official_store') %}<small><i class="fa-solid fa-certificate" style="color:var(--accent)"></i> {{ BRAND }} Official Store</small>{% endif %}
+                <small>Condition: {{ product.condition or 'New' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---------------- tabs as stacked sections ---------------- #}
+<div class="pd-sections">
+    <div class="pd-box">
+        <h2>Product details</h2>
+        <p>{{ product.description or 'No description provided.' }}</p>
+        {% if product.box_contents %}
+            <h3>What's in the box</h3>
+            <p>{{ product.box_contents }}</p>
+        {% endif %}
+    </div>
+
+    <div class="pd-box">
+        <h2>Specifications</h2>
+        <table class="spec-table">
+            {% if product.brand %}<tr><th>Brand</th><td>{{ product.brand }}</td></tr>{% endif %}
+            {% if product.sku %}<tr><th>SKU</th><td>{{ product.sku }}</td></tr>{% endif %}
+            <tr><th>Condition</th><td>{{ product.condition or 'New' }}</td></tr>
+            {% if product.color %}<tr><th>Colour</th><td>{{ product.color }}</td></tr>{% endif %}
+            {% if product.size %}<tr><th>Size / Capacity</th><td>{{ product.size }}</td></tr>{% endif %}
+            {% if product.weight %}<tr><th>Weight</th><td>{{ product.weight }} kg</td></tr>{% endif %}
+            {% for k, v in product.spec_rows if k not in ('Brand', 'SKU') %}<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}
+        </table>
+    </div>
+
+    <div class="pd-box" id="reviews">
+        <h2>Verified ratings ({{ product.rating_count }})</h2>
+        <div class="rating-summary">
+            <div class="rating-big">{{ '%.1f'|format(product.rating or 0) }}<span class="muted small">/5</span></div>
+            <div>{{ stars(product.rating) }}<div class="muted small">{{ product.rating_count }} rating{{ 's' if product.rating_count != 1 }}</div></div>
+        </div>
+
+        {% if can_review %}
+        <form method="POST" action="{{ url_for('products.product_review', product_id=product.id) }}" class="form-section">
+            <header><i class="fa-solid fa-pen-to-square"></i> Rate this product</header>
+            <div class="body">
+                {{ review_form.hidden_tag() }}
+                <div class="field"><label>{{ review_form.rating.label.text }}</label>{{ review_form.rating() }}</div>
+                <div class="field"><label>{{ review_form.comment.label.text }}</label>{{ review_form.comment(placeholder='What did you like or dislike?') }}</div>
+                {{ review_form.submit(class_='btn') }}
+            </div>
+        </form>
+        {% endif %}
+
+        {% for r in product.reviews %}
+            <div class="review">
+                {{ stars(r.rating) }}
+                <p style="margin:6px 0 0">{{ r.comment or '' }}</p>
+                <div class="who">by {{ r.author_name }} &middot; {{ r.created_at.strftime('%d-%m-%Y') if r.created_at }} {% if r.user_id %}&middot; <span class="verified"><i class="fa-solid fa-circle-check"></i> Verified purchase</span>{% endif %}</div>
+            </div>
+        {% else %}
+            <p class="muted">No ratings yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% if similar %}
+    {{ shelf('Similar products', 'fa-clone', similar) }}
+{% endif %}
+{% endblock %}

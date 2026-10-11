@@ -1,0 +1,53 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import csrf, field, pager with context %}
+
+{% block title %}Manage Categories - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head"><h1>Categories</h1></div>
+
+<form method="POST" class="form-card" style="margin-bottom:18px" novalidate>
+    {{ form.hidden_tag() }}
+    <h3>Add a category</h3>
+    <div class="form-grid">
+        {{ field(form.name) }}
+        {{ field(form.parent_id) }}
+    </div>
+    <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Add category</button>
+</form>
+
+<div class="panel">
+    <header>
+        <form class="toolbar" method="GET">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search {{ pagination.total }} categories">
+            <button class="btn btn-sm" type="submit">Search</button>
+        </form>
+    </header>
+    <div class="table-wrap"><table class="data">
+        <thead><tr><th>Name</th><th>Parent</th><th>Products</th><th></th></tr></thead>
+        <tbody>
+        {% for c in categories %}
+            <tr>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.rename_category', category_id=c.id) }}" class="toolbar">
+                        {{ csrf() }}
+                        <i class="fa-solid {{ c.icon or 'fa-tag' }}" style="color:var(--accent)"></i>
+                        <input type="text" name="name" value="{{ c.name }}" aria-label="Category name">
+                        <button class="btn btn-sm btn-ghost" type="submit">Rename</button>
+                    </form>
+                </td>
+                <td>{{ c.parent.name if c.parent else 'Department' }}</td>
+                <td>{{ counts.get(c.id, 0) }}</td>
+                <td class="right">
+                    <form method="POST" action="{{ url_for('admin.delete_category', category_id=c.id) }}" class="inline-form" data-confirm='Delete "{{ c.name }}"?'>
+                        {{ csrf() }}
+                        <button type="submit" class="btn btn-sm btn-danger"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{{ pager(pagination) }}
+{% endblock %}

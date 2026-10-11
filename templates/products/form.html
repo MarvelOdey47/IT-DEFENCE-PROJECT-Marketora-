@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import field with context %}
+
+{% set editing = product is not none %}
+{% block title %}{{ 'Edit product' if editing else 'Add a product' }} - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a><span class="sep">/</span>
+    <a href="{{ url_for('admin.products' if current_user.role == 'admin' else 'seller.products') }}">{{ 'All products' if current_user.role == 'admin' else 'My products' }}</a><span class="sep">/</span>
+    <span>{{ 'Edit' if editing else 'New product' }}</span>
+</nav>
+
+<form method="POST" enctype="multipart/form-data" class="form-card" novalidate>
+    {{ form.hidden_tag() }}
+    <h1>{{ 'Edit product' if editing else 'Add a new product' }}</h1>
+    <p class="lead">Complete the details below. Good titles, clear photos and accurate specifications help your product sell faster.</p>
+
+    <section class="form-section">
+        <header><i class="fa-solid fa-circle-info"></i> Basic information</header>
+        <div class="body form-grid">
+            {{ field(form.name, cls='full', placeholder='e.g. Samsung Galaxy A15 128GB') }}
+            {{ field(form.category_id) }}
+            {{ field(form.brand, placeholder='e.g. Samsung') }}
+            {{ field(form.condition) }}
+            {{ field(form.sku, placeholder='Your own product code') }}
+            {{ field(form.color, placeholder='e.g. Midnight Black') }}
+            {{ field(form.size, placeholder='e.g. 6.5 inch / 128GB / XL') }}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <header><i class="fa-solid fa-tags"></i> Pricing &amp; stock</header>
+        <div class="body form-grid">
+            {{ field(form.price, prefix='₦', min='1', step='0.01') }}
+            {{ field(form.old_price, prefix='₦', min='1', step='0.01') }}
+            {{ field(form.stock, min='0') }}
+            {{ field(form.weight, step='0.01', min='0') }}
+            {{ field(form.warranty, placeholder='e.g. 12 months manufacturer warranty') }}
+            {{ field(form.return_policy) }}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <header><i class="fa-solid fa-list-check"></i> Product details</header>
+        <div class="body">
+            {{ field(form.key_features, rows='5', placeholder='6.5 inch HD+ display\n5000mAh battery\nDual SIM') }}
+            {{ field(form.description, rows='6', placeholder='Describe your product in detail...') }}
+            {{ field(form.specifications, rows='6', placeholder='Screen size: 6.5 inches\nRAM: 4GB\nStorage: 128GB') }}
+            {{ field(form.box_contents, rows='2', placeholder='1 x Phone, 1 x Charger, 1 x USB cable') }}
+        </div>
+    </section>
+
+    <section class="form-section">
+        <header><i class="fa-solid fa-images"></i> Product images</header>
+        <div class="body">
+            <p class="muted small">The first image is the cover. Customers see all images in a slideshow on the product page. Add images by pasting links, uploading files, or both.</p>
+
+            {% if editing and product.images %}
+            <div class="field">
+                <label>Current images</label>
+                <div class="preview-grid">
+                    {% for img in product.images %}
+                    <div class="thumb">
+                        <img src="{{ img.url }}" alt="">
+                        {% if loop.first %}<span class="cover-flag">Cover</span>{% endif %}
+                        <label><input type="checkbox" name="remove_image" value="{{ img.id }}"> Remove</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {{ field(form.image_urls, rows='3', placeholder='https://example.com/photo-1.jpg\nhttps://example.com/photo-2.jpg') }}
+
+            <div class="field">
+                <label>Upload from your computer</label>
+                <label class="upload-box" data-upload>
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <div><strong>Click to choose images</strong> or drag and drop</div>
+                    <div class="muted small">PNG, JPG, WEBP or GIF - up to 5 MB each</div>
+                    <input type="file" name="image_files" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+                </label>
+                <div class="preview-grid" id="upload-previews"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="form-section">
+        <header><i class="fa-solid fa-bolt"></i> Promotion tags</header>
+        <div class="body">
+            <p class="muted small">Tags decide which homepage sections show your product. Flash sale needs an original price higher than the selling price.</p>
+            <div class="tag-picker">
+                {% for key, (title, icon, blurb) in tag_names.items() %}
+                    {% set locked = key == 'official_store' and current_user.role != 'admin' %}
+                    <label class="tag-option {{ 'locked' if locked }}">
+                        <input type="checkbox" name="tags" value="{{ key }}"
+                               {{ 'disabled' if locked }}
+                               {% if (request.form.getlist('tags') if request.method == 'POST' else (product.tag_list if editing else [])) and key in (request.form.getlist('tags') if request.method == 'POST' else product.tag_list) %}checked{% endif %}>
+                        <i class="fa-solid {{ icon }}"></i>
+                        <span><strong>{{ title }}</strong><small>{{ blurb }}{{ ' (admin only)' if locked }}</small></span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-lg"><i class="fa-solid fa-check"></i> {{ 'Save changes' if editing else 'Publish product' }}</button>
+        <a class="btn btn-lg btn-ghost" href="{{ url_for('admin.products' if current_user.role == 'admin' else 'seller.products') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,128 @@
+{# Shared template helpers. Import with:  {% from "partials/macros.html" import ... with context %} #}
+
+{# Round profile picture, or a person icon when the user has not uploaded one #}
+{% macro avatar(user, size=36) %}<span class="avatar" style="--s: {{ size }}px">{% if user.avatar_url %}<img src="{{ user.avatar_url }}" alt="">{% else %}<i class="fa-solid fa-user"></i>{% endif %}</span>{% endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro stars(rating) %}
+<span class="stars" aria-label="{{ '%.1f'|format(rating or 0) }} out of 5">
+    {%- for i in range(1, 6) -%}
+        {%- if (rating or 0) >= i -%}<i class="fa-solid fa-star"></i>
+        {%- elif (rating or 0) >= i - 0.5 -%}<i class="fa-solid fa-star-half-stroke"></i>
+        {%- else -%}<i class="fa-regular fa-star off"></i>{%- endif -%}
+    {%- endfor -%}
+</span>
+{% endmacro %}
+
+{% macro field(f, hint=None, prefix=None, cls='') %}
+<div class="field {{ cls }} {% if f.errors %}has-error{% endif %}">
+    <label for="{{ f.id }}">{{ f.label.text }}{% if f.flags.required %} <span class="req">*</span>{% endif %}</label>
+    {% if prefix %}
+        <div class="input-affix"><span class="affix">{{ prefix }}</span>{{ f(**kwargs) }}</div>
+    {% else %}
+        {{ f(**kwargs) }}
+    {% endif %}
+    {% if hint or f.description %}<div class="help">{{ hint or f.description }}</div>{% endif %}
+    {% for e in f.errors %}<div class="error">{{ e }}</div>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro pager(pagination) %}
+{% if pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+{% set _ = args.update(request.view_args or {}) %}
+<nav class="pagination" aria-label="Pages">
+    {% if pagination.has_prev %}
+        {% set _ = args.update({'page': pagination.prev_num}) %}
+        <a href="{{ url_for(request.endpoint, **args) }}" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></a>
+    {% endif %}
+    {% for n in pagination.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+        {% if n is none %}<span class="gap">...</span>
+        {% elif n == pagination.page %}<span class="current">{{ n }}</span>
+        {% else %}
+            {% set _ = args.update({'page': n}) %}
+            <a href="{{ url_for(request.endpoint, **args) }}">{{ n }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+        {% set _ = args.update({'page': pagination.next_num}) %}
+        <a href="{{ url_for(request.endpoint, **args) }}" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{# A titled, horizontally scrolling row of product cards #}
+{% macro shelf(title, icon, products, see_all=None, extra_class='', blurb=None) %}
+<section class="shelf {{ extra_class }}">
+    <div class="shelf-head">
+        <div class="head-left">
+            <h2><i class="fa-solid {{ icon }}"></i> {{ title }}</h2>
+            {{ caller() if caller else '' }}
+        </div>
+        {% if see_all %}<a class="see-all" href="{{ see_all }}">See all <i class="fa-solid fa-angle-right"></i></a>{% endif %}
+    </div>
+    <div class="scroller-wrap">
+        <button type="button" class="scroll-btn prev" aria-label="Scroll left"><i class="fa-solid fa-chevron-left"></i></button>
+        <div class="scroller">
+            {% for product in products %}{% include "partials/product_card.html" %}{% endfor %}
+        </div>
+        <button type="button" class="scroll-btn next" aria-label="Scroll right"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+</section>
+{% endmacro %}
+
+{# Manage-products table used by the seller (own products) and admin (all products) #}
+{% macro product_table(products, show_seller=False) %}
+<div class="table-wrap">
+<table class="data">
+    <thead><tr><th>Product</th>{% if show_seller %}<th>Seller</th>{% endif %}<th>Price</th><th>Stock</th><th>Tags</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for p in products %}
+        <tr>
+            <td>
+                <div class="cell-product">
+                    {% if p.image_url %}<img class="thumb-sm" src="{{ p.image_url }}" alt="">{% else %}<span class="thumb-sm"></span>{% endif %}
+                    <div><a class="t" href="{{ url_for('products.product_detail', product_id=p.id) }}">{{ p.name[:48] }}</a>
+                    <div class="muted small">{{ p.category.name if p.category else 'Uncategorised' }}</div></div>
+                </div>
+            </td>
+            {% if show_seller %}<td>{{ p.seller.username }}</td>{% endif %}
+            <td class="nowrap">{{ p.price|naira }}{% if p.discount_percent >= 1 %}<div class="muted small">-{{ p.discount_percent }}%</div>{% endif %}</td>
+            <td>{% if p.stock <= 5 %}<span style="color:var(--danger);font-weight:700">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
+            <td>{% for t in p.tag_list %}<span class="chip">{{ PRODUCT_TAGS[t][0] }}</span> {% endfor %}</td>
+            <td>{{ status_pill('active' if p.is_active else 'cancelled') }}</td>
+            <td>
+                <div class="row-actions">
+                    <a class="btn btn-sm btn-ghost" href="{{ url_for('products.product_detail', product_id=p.id) }}" title="View"><i class="fa-solid fa-eye"></i></a>
+                    <a class="btn btn-sm" href="{{ url_for('products.product_edit', product_id=p.id) }}" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                    <form method="POST" action="{{ url_for('products.product_delete', product_id=p.id) }}" class="inline-form" data-confirm='Are you sure you want to delete "{{ p.name }}"?'>
+                        {{ csrf() }}
+                        <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7" class="muted center" style="padding:30px">No products found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endmacro %}
+
+{# Status buttons for an order. `choices` is the list of statuses that may be chosen #}
+{% macro status_form(order, action_url, choices) %}
+{% if choices %}
+<form method="POST" action="{{ action_url }}" class="toolbar">
+    {{ csrf() }}
+    <select name="status" aria-label="New status">
+        {% for s in choices %}<option value="{{ s }}">{{ s|capitalize }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-sm">Update</button>
+</form>
+{% endif %}
+{% endmacro %}
+
+{% macro status_pill(status) %}<span class="pill {{ status }}">{{ status }}</span>{% endmacro %}

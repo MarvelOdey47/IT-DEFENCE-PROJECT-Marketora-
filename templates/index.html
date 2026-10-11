@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import shelf with context %}
+
+{% block title %}{{ BRAND }} - Shop with confidence{% endblock %}
+
+{% block content %}
+<div class="home-top">
+    <aside class="sidebar" aria-label="Categories">
+        <h4>CATEGORIES</h4>
+        {% for dept in category_tree[:14] %}
+            <a class="dept" href="{{ url_for('products.category_page', slug=dept.slug) }}">
+                <i class="fa-solid {{ dept.icon }}"></i>{{ dept.name }}
+            </a>
+        {% endfor %}
+        <button type="button" class="btn btn-outline btn-sm see-all" data-open-drawer>
+            <i class="fa-solid fa-list"></i> All {{ category_tree|length }} departments
+        </button>
+        <div class="safe"><i class="fa-solid fa-shield-halved"></i> Shop with confidence</div>
+    </aside>
+
+    <section class="hero" aria-label="Featured offers" data-delay="6000" data-refresh="180000">
+        <div class="hero-slide s0">
+            <div class="copy">
+                <span class="eyebrow">Welcome to {{ BRAND }}</span>
+                <h2>New arrivals every day</h2>
+                <p>Thousands of products from trusted sellers, delivered to your door. Pay on delivery available.</p>
+                <a class="btn btn-lg" href="{{ url_for('products.explore') }}">Start exploring</a>
+            </div>
+            <div class="art"><i class="fa-solid fa-bag-shopping" style="font-size:9rem;opacity:.9"></i></div>
+        </div>
+        {% for p in hero_products[:4] %}
+        <div class="hero-slide s{{ loop.index }}">
+            <div class="copy">
+                <span class="eyebrow"><i class="fa-solid fa-bolt"></i> Flash sale{% if p.discount_percent %} - {{ p.discount_percent }}% off{% endif %}</span>
+                <h2>{{ p.name[:48] }}</h2>
+                <p>{{ p.brand or 'Top brand' }} &middot; now only {{ p.price|naira }}</p>
+                <a class="btn btn-lg" href="{{ url_for('products.product_detail', product_id=p.id) }}">Shop now</a>
+            </div>
+            <div class="art">
+                <img src="{{ p.image_url }}" alt="{{ p.name }}">
+                <span class="price-bubble">{{ p.price|naira }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        <button type="button" class="hero-nav prev" aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+        <button type="button" class="hero-nav next" aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="hero-dots"></div>
+    </section>
+
+    <div class="side-promos">
+        <a class="promo-tile" href="{{ portal_url('seller', 'auth.register', role='seller') }}">
+            <i class="fa-solid fa-store"></i><div><strong>Sell on {{ BRAND }}</strong><span>Open your store today</span></div>
+        </a>
+        <a class="promo-tile" href="{{ url_for('products.product_list', tag='official_store') }}">
+            <i class="fa-solid fa-certificate"></i><div><strong>Official Store</strong><span>Genuine, guaranteed</span></div>
+        </a>
+        <a class="promo-tile" href="{{ url_for('products.explore') }}">
+            <i class="fa-solid fa-compass"></i><div><strong>Discover</strong><span>Endless picks for you</span></div>
+        </a>
+    </div>
+</div>
+
+<div class="trust-strip">
+    <div><i class="fa-solid fa-truck-fast"></i><div><strong>Fast delivery</strong><span>Nationwide shipping</span></div></div>
+    <div><i class="fa-solid fa-hand-holding-dollar"></i><div><strong>Pay on delivery</strong><span>Only pay when it arrives</span></div></div>
+    <div><i class="fa-solid fa-rotate-left"></i><div><strong>Easy returns</strong><span>7-day return policy</span></div></div>
+    <div><i class="fa-solid fa-headset"></i><div><strong>24/7 support</strong><span>We are here to help</span></div></div>
+</div>
+
+{# ---------- Popular categories carousel: every sub-category, interleaved by department ---------- #}
+<section class="shelf">
+    <div class="shelf-head">
+        <h2><i class="fa-solid fa-layer-group"></i> Popular Categories</h2>
+        <a class="see-all" href="#" data-open-drawer>Browse all <i class="fa-solid fa-angle-right"></i></a>
+    </div>
+    <div class="scroller-wrap" data-autoplay="3500">
+        <button type="button" class="scroll-btn prev" aria-label="Scroll left"><i class="fa-solid fa-chevron-left"></i></button>
+        <div class="scroller cat-scroller">
+            {% for j in range(20) %}
+                {% for dept in category_tree %}
+                    {% if dept.children|length > j %}
+                        {% set c = dept.children[j] %}
+                        <a class="cat-card" href="{{ url_for('products.category_page', slug=c.slug) }}">
+                            <i class="fa-solid {{ dept.icon }}"></i>{{ c.name }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <button type="button" class="scroll-btn next" aria-label="Scroll right"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+</section>
+
+{# ---------- Tag-driven sections (flash sales first) ---------- #}
+{% for s in sections if s.key == 'flash_sale' %}
+    {% call shelf(s.title, s.icon, s.products, url_for('products.product_list', tag=s.key), 'flash') %}
+        <div class="countdown" data-countdown="{{ flash_ends }}">
+            Ends in <span class="slot" data-h>00</span><span class="colon">:</span><span class="slot" data-m>00</span><span class="colon">:</span><span class="slot" data-s>00</span>
+        </div>
+    {% endcall %}
+{% endfor %}
+
+<div class="banner-row">
+    <a class="banner b1" href="{{ url_for('products.product_list', tag='top_deal') }}">
+        <i class="fa-solid fa-tags bg"></i>
+        <h3>Top Deals</h3><p>Price drops on bestselling items</p><span class="go">Shop deals <i class="fa-solid fa-arrow-right"></i></span>
+    </a>
+    <a class="banner b2" href="{{ url_for('products.category_page', slug='phones-tablets') }}">
+        <i class="fa-solid fa-mobile-screen-button bg"></i>
+        <h3>Phones &amp; Tablets</h3><p>Latest smartphones and accessories</p><span class="go">Browse <i class="fa-solid fa-arrow-right"></i></span>
+    </a>
+    <a class="banner b3" href="{{ portal_url('seller', 'auth.register', role='seller') }}">
+        <i class="fa-solid fa-store bg"></i>
+        <h3>Become a seller</h3><p>List your products and reach more buyers</p><span class="go">Start selling <i class="fa-solid fa-arrow-right"></i></span>
+    </a>
+</div>
+
+{% for s in sections if s.key != 'flash_sale' %}
+    {{ shelf(s.title, s.icon, s.products, url_for('products.product_list', tag=s.key)) }}
+{% endfor %}
+
+{% for strip in strips %}
+    {{ shelf(strip.dept.name, strip.dept.icon, strip.products, url_for('products.category_page', slug=strip.dept.slug)) }}
+{% endfor %}
+
+{% if official %}
+    {{ shelf('Official Store', 'fa-certificate', official, url_for('products.product_list', tag='official_store')) }}
+{% endif %}
+
+<section class="shelf">
+    <div class="shelf-head">
+        <h2><i class="fa-solid fa-compass"></i> Discover more stores</h2>
+    </div>
+    <div class="more-stores">
+        <a class="store-link" href="https://www.jumia.com.ng" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i><div>Jumia Nigeria<small>Compare prices</small></div></a>
+        <a class="store-link" href="https://www.konga.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i><div>Konga<small>More deals</small></div></a>
+        <a class="store-link" href="https://www.temu.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i><div>Temu<small>Global marketplace</small></div></a>
+        <a class="store-link" href="https://www.aliexpress.com" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i><div>AliExpress<small>International shopping</small></div></a>
+    </div>
+</section>
+
+
+<section class="shelf news" id="market-news" aria-label="Market news">
+    <div class="shelf-head">
+        <div class="head-left">
+            <h2><i class="fa-solid fa-newspaper"></i> Market news</h2>
+            <span class="muted small">Online retail, stocks and marketing - mostly Nigeria</span>
+        </div>
+    </div>
+    <div class="news-tabs" role="tablist"></div>
+    <div class="news-grid" aria-live="polite">
+        <p class="muted" style="padding:20px">Loading the latest headlines...</p>
+    </div>
+    <div class="news-foot muted small">Headlines link to the original publishers. Fetched via Bing News.</div>
+</section>
+
+<div class="center" style="margin:26px 0">
+    <a class="btn btn-lg" href="{{ url_for('products.explore') }}"><i class="fa-solid fa-compass"></i> Keep exploring - endless picks</a>
+</div>
+{% endblock %}

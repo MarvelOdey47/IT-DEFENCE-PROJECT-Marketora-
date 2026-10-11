@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Explore - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb"><a href="{{ url_for('index') }}">Home</a><span class="sep">/</span><span>Explore</span></nav>
+
+<div class="results-head">
+    <h1><i class="fa-solid fa-compass" style="color:var(--accent)"></i> Explore {{ BRAND }}</h1>
+    <span class="muted small">A fresh mix from every category - keep scrolling, it never ends.</span>
+</div>
+
+<div class="product-grid" id="feed" data-seed="{{ seed }}">
+    {% for product in products %}{% include "partials/product_card.html" %}{% endfor %}
+</div>
+<div id="feed-sentinel"></div>
+<div class="load-more">
+    <button type="button" class="btn btn-outline btn-lg" id="feed-more">Load more products</button>
+</div>
+{% endblock %}

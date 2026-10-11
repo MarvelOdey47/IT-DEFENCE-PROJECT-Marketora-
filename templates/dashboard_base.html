@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import avatar with context %}
+
+{% block content %}
+{% set ep = request.endpoint %}
+{% if current_user.role == 'admin' %}
+    {% set nav = [
+        ('admin.dashboard', 'fa-gauge-high', 'Overview'),
+        ('admin.users', 'fa-users', 'Users'),
+        ('admin.products', 'fa-box-open', 'Products'),
+        ('admin.categories', 'fa-sitemap', 'Categories'),
+        ('admin.orders', 'fa-receipt', 'Orders'),
+    ] %}
+{% elif current_user.role == 'seller' %}
+    {% set nav = [
+        ('seller.dashboard', 'fa-gauge-high', 'Overview'),
+        ('seller.products', 'fa-box-open', 'My products'),
+        ('products.product_create', 'fa-square-plus', 'Add product'),
+        ('seller.orders', 'fa-receipt', 'Orders'),
+    ] %}
+{% else %}
+    {% set nav = [
+        ('dashboard', 'fa-gauge-high', 'Overview'),
+        ('orders.order_list', 'fa-box', 'My orders'),
+        ('cart.cart_view', 'fa-cart-shopping', 'My cart'),
+    ] %}
+{% endif %}
+
+<div class="dash">
+    <nav class="dash-nav" aria-label="Dashboard">
+        <a class="who" href="{{ url_for('auth.account') }}" title="Edit profile">
+            {{ avatar(current_user, 46) }}
+            <span><strong>{{ current_user.username }}</strong><span class="pill {{ current_user.role }}">{{ current_user.role }}</span></span>
+        </a>
+        {% for endpoint, icon, label in nav %}
+            <a href="{{ url_for(endpoint) }}" class="{{ 'active' if ep == endpoint }}"><i class="fa-solid {{ icon }}"></i>{{ label }}</a>
+        {% endfor %}
+        <a href="{{ url_for('auth.account') }}" class="{{ 'active' if ep == 'auth.account' }}"><i class="fa-solid fa-user-gear"></i>Profile</a>
+        <a href="{{ url_for('index') if current_user.role != 'admin' else portal_url('customer', 'index') }}"><i class="fa-solid fa-house"></i>Back to store</a>
+    </nav>
+    <section>
+        {% block dash %}{% endblock %}
+    </section>
+</div>
+{% endblock %}

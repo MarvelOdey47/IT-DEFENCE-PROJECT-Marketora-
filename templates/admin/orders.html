@@ -1,0 +1,46 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import csrf, status_pill, pager with context %}
+
+{% block title %}Manage Orders - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head">
+    <h1>Orders</h1>
+    <form class="toolbar" method="GET">
+        <select name="status" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if status == s }}>{{ s|capitalize }}</option>{% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="table-wrap"><table class="data">
+        <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th><th>Change</th></tr></thead>
+        <tbody>
+        {% for o in orders %}
+            <tr>
+                <td><strong>{{ o.reference }}</strong></td>
+                <td>{{ o.user.username }}<div class="muted small">{{ o.shipping_city }}</div></td>
+                <td class="small">{% for i in o.items %}{{ i.product.name[:26] }} &times; {{ i.quantity }}{{ '<br>'|safe if not loop.last }}{% endfor %}</td>
+                <td>{{ o.total|naira }}</td>
+                <td>{{ o.created_at.strftime('%d %b %Y') if o.created_at }}</td>
+                <td>{{ status_pill(o.status) }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.update_order_status', order_id=o.id) }}" class="toolbar">
+                        {{ csrf() }}
+                        <select name="status" aria-label="Status">
+                            {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if o.status == s }}>{{ s|capitalize }}</option>{% endfor %}
+                        </select>
+                        <button class="btn btn-sm" type="submit">Set</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7" class="muted center" style="padding:30px">No orders found.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{{ pager(pagination) }}
+{% endblock %}

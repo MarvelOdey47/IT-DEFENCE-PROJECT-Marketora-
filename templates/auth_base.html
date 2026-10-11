@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{# Standalone layout for sign-in / register pages: no navbar, category drawer, sidebar or footer #}
+{% block header %}{% include "partials/auth_top.html" %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block main_class %}auth-main{% endblock %}

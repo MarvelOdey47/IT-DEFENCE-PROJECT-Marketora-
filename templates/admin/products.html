@@ -1,0 +1,22 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import product_table, pager with context %}
+
+{% block title %}All Products - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head">
+    <h1>All products</h1>
+    <a class="btn" href="{{ url_for('products.product_create') }}"><i class="fa-solid fa-plus"></i> Add product</a>
+</div>
+<div class="panel">
+    <header>
+        <form class="toolbar" method="GET">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search products or brands">
+            <button class="btn btn-sm" type="submit">Search</button>
+        </form>
+        <span class="muted small">{{ pagination.total }} product{{ 's' if pagination.total != 1 }} from all sellers</span>
+    </header>
+    {{ product_table(products, show_seller=True) }}
+</div>
+{{ pager(pagination) }}
+{% endblock %}

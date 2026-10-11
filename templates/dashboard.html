@@ -1,0 +1,40 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import status_pill %}
+
+{% block title %}My Account - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head">
+    <h1>Welcome back, {{ current_user.username }}</h1>
+    <a class="btn" href="{{ url_for('products.explore') }}"><i class="fa-solid fa-compass"></i> Keep shopping</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat"><div class="ico"><i class="fa-solid fa-box"></i></div><div><div class="num">{{ total_orders }}</div><div class="lbl">Total orders</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-truck-fast"></i></div><div><div class="num">{{ in_progress }}</div><div class="lbl">In progress</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-circle-check"></i></div><div><div class="num">{{ delivered }}</div><div class="lbl">Delivered</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-wallet"></i></div><div><div class="num">{{ spent|naira }}</div><div class="lbl">Total spent</div></div></div>
+</div>
+
+<div class="panel">
+    <header><h2>Recent orders</h2><a href="{{ url_for('orders.order_list') }}">View all</a></header>
+    <div class="table-wrap">
+        <table class="data">
+            <thead><tr><th>Order</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for o in recent_orders %}
+                <tr>
+                    <td><strong>{{ o.reference }}</strong></td>
+                    <td>{{ o.created_at.strftime('%d %b %Y') if o.created_at }}</td>
+                    <td>{{ o.total|naira }}</td>
+                    <td>{{ status_pill(o.status) }}</td>
+                    <td class="right"><a class="btn btn-sm btn-outline" href="{{ url_for('orders.order_detail', order_id=o.id) }}">View</a></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="muted center">No orders yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

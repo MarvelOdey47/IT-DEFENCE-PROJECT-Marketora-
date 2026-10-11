@@ -1,0 +1,56 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import csrf, status_pill, pager with context %}
+
+{% block title %}Manage Users - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head"><h1>Users</h1></div>
+
+<div class="panel">
+    <header>
+        <form class="toolbar" method="GET">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search username or email">
+            <select name="role" onchange="this.form.submit()">
+                <option value="">All roles</option>
+                {% for r in ['customer', 'seller', 'admin'] %}<option value="{{ r }}" {{ 'selected' if role == r }}>{{ r|capitalize }}</option>{% endfor %}
+            </select>
+            <button class="btn btn-sm" type="submit">Search</button>
+        </form>
+        <span class="muted small">{{ pagination.total }} user{{ 's' if pagination.total != 1 }}</span>
+    </header>
+    <div class="table-wrap"><table class="data">
+        <thead><tr><th>User</th><th>Role</th><th>Joined</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td><strong>{{ u.username }}</strong><div class="muted small">{{ u.email }}</div></td>
+                <td>
+                    {% if u.id != current_user.id %}
+                    <form method="POST" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="toolbar">
+                        {{ csrf() }}
+                        <select name="role" onchange="this.form.submit()" aria-label="Role">
+                            {% for r in ['customer', 'seller', 'admin'] %}<option value="{{ r }}" {{ 'selected' if u.role == r }}>{{ r|capitalize }}</option>{% endfor %}
+                        </select>
+                    </form>
+                    {% else %}{{ status_pill(u.role) }}{% endif %}
+                </td>
+                <td>{{ u.created_at.strftime('%d %b %Y') if u.created_at }}</td>
+                <td>{{ status_pill('suspended' if u.suspended else 'active') }}</td>
+                <td class="right">
+                    {% if u.role != 'admin' %}
+                    <form method="POST" action="{{ url_for('admin.toggle_suspend', user_id=u.id) }}" class="inline-form"
+                          data-confirm="{{ 'Reactivate' if u.suspended else 'Suspend' }} {{ u.username }}?">
+                        {{ csrf() }}
+                        <button type="submit" class="btn btn-sm {{ 'btn-outline' if u.suspended else 'btn-danger' }}">
+                            <i class="fa-solid {{ 'fa-user-check' if u.suspended else 'fa-user-slash' }}"></i> {{ 'Reactivate' if u.suspended else 'Suspend' }}
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{{ pager(pagination) }}
+{% endblock %}

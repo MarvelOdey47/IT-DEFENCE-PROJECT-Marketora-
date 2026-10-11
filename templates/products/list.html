@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pager with context %}
+
+{% set heading = category.name if category else (tag_names[tag][0] if tag else ('Results for "' ~ q ~ '"' if q else 'All products')) %}
+{% block title %}{{ heading }} - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('index') }}">Home</a><span class="sep">/</span>
+    {% if category and category.parent_id %}
+        <a href="{{ url_for('products.category_page', slug=category.parent.slug) }}">{{ category.parent.name }}</a><span class="sep">/</span>
+    {% endif %}
+    <span>{{ heading }}</span>
+</nav>
+
+<div class="results">
+    <aside class="filters">
+        <div class="filter-block">
+            <h4>Category</h4>
+            {% if parent %}
+                <a class="opt {{ 'active' if category and category.id == parent.id }}" href="{{ url_for('products.category_page', slug=parent.slug) }}">All {{ parent.name }}</a>
+                {% for c in parent.children[:14] %}
+                    <a class="opt {{ 'active' if category and category.id == c.id }}" href="{{ url_for('products.category_page', slug=c.slug) }}">&nbsp;&nbsp;{{ c.name }}</a>
+                {% endfor %}
+            {% else %}
+                {% for dept in category_tree[:12] %}
+                    <a class="opt" href="{{ url_for('products.category_page', slug=dept.slug) }}"><i class="fa-solid {{ dept.icon }}"></i>&nbsp; {{ dept.name }}</a>
+                {% endfor %}
+                <a class="opt" href="#" data-open-drawer>See all categories</a>
+            {% endif %}
+        </div>
+
+        <form class="filter-block" method="GET">
+            <h4>Price (NGN)</h4>
+            {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+            {% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
+            {% if brand %}<input type="hidden" name="brand" value="{{ brand }}">{% endif %}
+            {% if category and request.endpoint == 'products.product_list' %}<input type="hidden" name="category" value="{{ category.slug }}">{% endif %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <div class="price-filter">
+                <input type="number" name="min" min="0" placeholder="Min" value="{{ '%d'|format(min_price) if min_price is not none }}">
+                <span>-</span>
+                <input type="number" name="max" min="0" placeholder="Max" value="{{ '%d'|format(max_price) if max_price is not none }}">
+            </div>
+            <button type="submit" class="btn btn-sm btn-block" style="margin-top:10px">Apply</button>
+        </form>
+
+        {% if brands %}
+        <div class="filter-block">
+            <h4>Brand</h4>
+            {% set base_args = request.args.to_dict() %}
+            {% set _ = base_args.update(request.view_args or {}) %}
+            {% for b in brands %}
+                {% set _ = base_args.update({'brand': b, 'page': 1}) %}
+                <a class="opt {{ 'active' if b == brand }}" href="{{ url_for(request.endpoint, **base_args) }}">{{ b }}</a>
+            {% endfor %}
+            {% if brand %}
+                {% set _ = base_args.pop('brand') %}
+                <a class="opt" href="{{ url_for(request.endpoint, **base_args) }}"><i class="fa-solid fa-xmark"></i> Clear brand</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </aside>
+
+    <section>
+        <div class="results-head">
+            <h1>{{ heading }} <span class="muted small">({{ pagination.total }} product{{ 's' if pagination.total != 1 }})</span></h1>
+            <form method="GET" class="toolbar">
+                {% for k, v in request.args.items() if k not in ('sort', 'page') %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+                <label for="sort" class="muted small">Sort by</label>
+                <select name="sort" id="sort" onchange="this.form.submit()">
+                    {% for value, label in sort_options %}
+                        <option value="{{ value }}" {{ 'selected' if sort == value }}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        {% if products %}
+            <div class="product-grid">
+                {% for product in products %}{% include "partials/product_card.html" %}{% endfor %}
+            </div>
+            {{ pager(pagination) }}
+        {% else %}
+            <div class="empty card">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h2>No products found</h2>
+                <p>Try different keywords or remove some filters.</p>
+                <a class="btn" href="{{ url_for('products.explore') }}">Explore products</a>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

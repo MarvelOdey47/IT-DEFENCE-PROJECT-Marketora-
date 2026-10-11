@@ -1,0 +1,58 @@
+<footer class="site-footer">
+    <div class="footer-main">
+        <div class="f-brand">
+            <a class="logo" href="{{ url_for('index') }}"><span class="logo-mark"><i class="fa-solid fa-store"></i></span>{{ BRAND }}</a>
+            <p>Discover products from trusted sellers, delivered to your door.</p>
+            <div class="socials">
+                <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            </div>
+        </div>
+        <div class="f-col">
+            <h4>Shop</h4>
+            {% for dept in category_tree[:4] %}
+                <a href="{{ url_for('products.category_page', slug=dept.slug) }}">{{ dept.name }}</a>
+            {% endfor %}
+            <a href="{{ url_for('products.explore') }}">Explore all</a>
+        </div>
+        <div class="f-col">
+            <h4>Help</h4>
+            <a href="{{ url_for('orders.order_list') }}">Track your order</a>
+            <a href="#">Delivery</a>
+            <a href="#">Returns</a>
+            <a href="#">Contact us</a>
+        </div>
+        <div class="f-col">
+            <h4>Sell</h4>
+            <a href="{{ portal_url('seller', 'auth.register', role='seller') }}">Become a seller</a>
+            <a href="{{ portal_url('seller', 'auth.login', role='seller') }}">Seller sign in</a>
+            <a href="#">Seller policies</a>
+        </div>
+        <div class="f-col">
+            <h4>Other stores</h4>
+            <a href="https://www.jumia.com.ng" target="_blank" rel="noopener noreferrer">Jumia <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+            <a href="https://www.konga.com" target="_blank" rel="noopener noreferrer">Konga <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+            <a href="https://www.temu.com" target="_blank" rel="noopener noreferrer">Temu <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        </div>
+        <form class="f-news" onsubmit="event.preventDefault(); this.innerHTML = '<strong>Thanks for subscribing!</strong>';">
+            <h4>Get deals by email</h4>
+            <div class="f-news-row">
+                <input type="email" placeholder="Your email" required aria-label="Email address">
+                <button type="submit" aria-label="Subscribe"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </form>
+    </div>
+    <div class="footer-bottom">
+        <div class="inner">
+            <span>&copy; 2026 {{ BRAND }}. Demo marketplace &middot; product data from dummyjson.com</span>
+            <div class="pay-icons" aria-label="Payment methods">
+                <i class="fa-brands fa-cc-visa"></i>
+                <i class="fa-brands fa-cc-mastercard"></i>
+                <i class="fa-solid fa-money-bill-wave" title="Pay on delivery"></i>
+                <i class="fa-solid fa-building-columns" title="Bank transfer"></i>
+            </div>
+        </div>
+    </div>
+</footer>

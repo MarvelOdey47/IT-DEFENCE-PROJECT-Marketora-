@@ -1,0 +1,72 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import status_pill with context %}
+
+{% block title %}Admin Dashboard - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head"><h1>Admin dashboard</h1></div>
+
+<div class="stat-grid">
+    <div class="stat"><div class="ico"><i class="fa-solid fa-users"></i></div><div><div class="num">{{ user_count }}</div><div class="lbl">Users</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-box-open"></i></div><div><div class="num">{{ product_count }}</div><div class="lbl">Active products</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-receipt"></i></div><div><div class="num">{{ order_count }}</div><div class="lbl">Orders</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-naira-sign"></i></div><div><div class="num">{{ revenue|naira }}</div><div class="lbl">Revenue</div></div></div>
+    <div class="stat"><div class="ico"><i class="fa-solid fa-sitemap"></i></div><div><div class="num">{{ category_count }}</div><div class="lbl">Categories</div></div></div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="panel" style="margin:0">
+        <header><h2>Orders by status</h2></header>
+        <div class="body bar-list">
+            {% set max_count = (status_counts.values()|list + [1])|max %}
+            {% for s in statuses %}
+            <div class="bar">
+                <span>{{ s|capitalize }}</span>
+                <div class="track"><div class="fill" style="width: {{ ((status_counts.get(s, 0) / max_count) * 100)|round|int }}%"></div></div>
+                <strong>{{ status_counts.get(s, 0) }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="panel" style="margin:0">
+        <header><h2>Users by role</h2></header>
+        <div class="body bar-list">
+            {% set max_role = (role_counts.values()|list + [1])|max %}
+            {% for r in ['customer', 'seller', 'admin'] %}
+            <div class="bar">
+                <span>{{ r|capitalize }}</span>
+                <div class="track"><div class="fill" style="width: {{ ((role_counts.get(r, 0) / max_role) * 100)|round|int }}%"></div></div>
+                <strong>{{ role_counts.get(r, 0) }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="panel" style="margin-top:18px">
+    <header><h2>Recent orders</h2><a href="{{ url_for('admin.orders') }}">View all</a></header>
+    <div class="table-wrap"><table class="data">
+        <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for o in recent_orders %}
+            <tr><td><strong>{{ o.reference }}</strong></td><td>{{ o.user.username }}</td><td>{{ o.total|naira }}</td><td>{{ status_pill(o.status) }}</td></tr>
+        {% else %}<tr><td colspan="4" class="muted center" style="padding:20px">No orders yet.</td></tr>{% endfor %}
+        </tbody>
+    </table></div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="panel" style="margin:0">
+        <header><h2>Recent users</h2><a href="{{ url_for('admin.users') }}">Manage</a></header>
+        <div class="table-wrap"><table class="data"><tbody>
+            {% for u in recent_users %}<tr><td>{{ u.username }}<div class="muted small">{{ u.email }}</div></td><td class="right">{{ status_pill(u.role) }}</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+    <div class="panel" style="margin:0">
+        <header><h2>Recent products</h2><a href="{{ url_for('admin.products') }}">Manage</a></header>
+        <div class="table-wrap"><table class="data"><tbody>
+            {% for p in recent_products %}<tr><td><a href="{{ url_for('products.product_detail', product_id=p.id) }}">{{ p.name[:34] }}</a><div class="muted small">by {{ p.seller.username }}</div></td><td class="right">{{ p.price|naira }}</td></tr>{% endfor %}
+        </tbody></table></div>
+    </div>
+</div>
+{% endblock %}

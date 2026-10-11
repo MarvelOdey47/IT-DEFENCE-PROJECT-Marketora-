@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import csrf %}
+
+{% block title %}My Cart - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title"><i class="fa-solid fa-cart-shopping" style="color:var(--accent)"></i> My Cart</h1>
+
+{% if items %}
+<div class="two-col">
+    <div class="card">
+        <h3>Cart ({{ items|length }} item{{ 's' if items|length != 1 }})</h3>
+        {% for item in items %}
+        <div class="cart-line">
+            <a class="img" href="{{ url_for('products.product_detail', product_id=item.product_id) }}">
+                {% if item.product.image_url %}<img src="{{ item.product.image_url }}" alt="">{% endif %}
+            </a>
+            <div>
+                <a href="{{ url_for('products.product_detail', product_id=item.product_id) }}"><strong>{{ item.product.name }}</strong></a>
+                <div class="muted small">Sold by {{ item.product.seller.username }} &middot; {{ item.product.stock }} in stock</div>
+                <div class="controls">
+                    <form method="POST" action="{{ url_for('cart.cart_update', product_id=item.product_id) }}" class="qty-form">
+                        {{ csrf() }}
+                        <button type="submit" name="action" value="set" class="hidden" tabindex="-1" aria-hidden="true"></button>
+                        <div class="qty-stepper">
+                            <button type="submit" name="action" value="dec" aria-label="Decrease">&minus;</button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" data-autosubmit>
+                            <button type="submit" name="action" value="inc" aria-label="Increase">+</button>
+                        </div>
+                    </form>
+                    <form method="POST" action="{{ url_for('cart.cart_remove', product_id=item.product_id) }}" class="inline-form">
+                        {{ csrf() }}
+                        <button type="submit" class="link-danger"><i class="fa-solid fa-trash"></i> Remove</button>
+                    </form>
+                </div>
+            </div>
+            <div class="right line-total">
+                <div class="price-lg" style="font-size:1.2rem">{{ (item.product.price * item.quantity)|naira }}</div>
+                <div class="muted small">{{ item.product.price|naira }} each</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <aside class="card summary">
+        <h3>Cart summary</h3>
+        <div class="line"><span>Subtotal</span><strong>{{ total|naira }}</strong></div>
+        <div class="line muted"><span>Delivery</span><span>Calculated at checkout</span></div>
+        <div class="line total"><span>Total</span><span>{{ total|naira }}</span></div>
+        <a class="btn btn-lg btn-block" href="{{ url_for('orders.checkout') }}" style="margin-top:14px">Checkout ({{ total|naira }})</a>
+        <a class="btn btn-ghost btn-block" href="{{ url_for('products.explore') }}" style="margin-top:10px">Continue shopping</a>
+    </aside>
+</div>
+{% else %}
+<div class="card empty">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <h2>Your cart is empty</h2>
+    <p>Browse our categories and discover amazing deals.</p>
+    <a class="btn btn-lg" href="{{ url_for('products.explore') }}">Start shopping</a>
+</div>
+{% endif %}
+{% endblock %}

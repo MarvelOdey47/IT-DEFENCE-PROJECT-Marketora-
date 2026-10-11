@@ -1,0 +1,43 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import status_pill, status_form, pager with context %}
+
+{% block title %}Orders - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head">
+    <h1>Orders for my products</h1>
+    <form class="toolbar" method="GET">
+        <select name="status" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            {% for s in ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] %}
+                <option value="{{ s }}" {{ 'selected' if status == s }}>{{ s|capitalize }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+{% for o in orders %}
+<div class="order-card">
+    <header>
+        <div><strong>Order {{ o.reference }}</strong> <span class="muted small">&middot; {{ o.created_at.strftime('%d %b %Y, %H:%M') if o.created_at }}</span></div>
+        {{ status_pill(o.status) }}
+    </header>
+    <div class="items">
+        {% for i in seller_items(o) %}
+        <div class="item">
+            {% if i.product.image_url %}<img class="thumb-sm" src="{{ i.product.image_url }}" alt="">{% endif %}
+            <div style="flex:1">{{ i.product.name }}<div class="muted small">Qty {{ i.quantity }} &times; {{ i.price|naira }}</div></div>
+            <strong>{{ (i.price * i.quantity)|naira }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+    <footer>
+        <div class="small muted"><i class="fa-solid fa-location-dot"></i> {{ o.shipping_name }}, {{ o.shipping_address }}, {{ o.shipping_city }} &middot; {{ o.shipping_phone }}</div>
+        {{ status_form(o, url_for('seller.update_order_status', order_id=o.id), next_statuses.get(o.status, [])) }}
+    </footer>
+</div>
+{% else %}
+<div class="card empty"><i class="fa-solid fa-receipt"></i><h2>No orders yet</h2><p>Orders containing your products will appear here.</p></div>
+{% endfor %}
+{{ pager(pagination) }}
+{% endblock %}

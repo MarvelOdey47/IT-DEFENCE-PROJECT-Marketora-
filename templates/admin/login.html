@@ -1,0 +1,18 @@
+{% extends "auth_base.html" %}
+{% from "partials/macros.html" import field with context %}
+
+{% block title %}Admin Sign In - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <form method="POST" class="form-card" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="admin-badge"><i class="fa-solid fa-shield-halved"></i></div>
+        <h1 class="center">Administrator sign in</h1>
+        <p class="lead center">Restricted area. Authorised staff only.</p>
+        {{ field(form.username, autocomplete='username') }}
+        {{ field(form.password, autocomplete='current-password') }}
+        <button type="submit" class="btn btn-lg btn-block"><i class="fa-solid fa-right-to-bracket"></i> Sign in</button>
+    </form>
+</div>
+{% endblock %}

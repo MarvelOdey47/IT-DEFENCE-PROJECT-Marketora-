@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_pill %}
+
+{% block title %}My Orders - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title"><i class="fa-solid fa-box" style="color:var(--accent)"></i> My Orders</h1>
+
+{% for order in orders %}
+<div class="order-card">
+    <header>
+        <div><strong>Order {{ order.reference }}</strong> <span class="muted small">&middot; placed {{ order.created_at.strftime('%d %b %Y') if order.created_at }}</span></div>
+        {{ status_pill(order.status) }}
+    </header>
+    <div class="items">
+        {% for item in order.items[:3] %}
+        <div class="item">
+            {% if item.product.image_url %}<img class="thumb-sm" src="{{ item.product.image_url }}" alt="">{% endif %}
+            <div style="flex:1">{{ item.product.name }}<div class="muted small">Qty {{ item.quantity }}</div></div>
+            <strong>{{ (item.price * item.quantity)|naira }}</strong>
+        </div>
+        {% endfor %}
+        {% if order.items|length > 3 %}<div class="muted small" style="padding:8px 0">+ {{ order.items|length - 3 }} more item(s)</div>{% endif %}
+    </div>
+    <footer>
+        <strong>Total: {{ order.total|naira }}</strong>
+        <a class="btn btn-sm" href="{{ url_for('orders.order_detail', order_id=order.id) }}">View details</a>
+    </footer>
+</div>
+{% else %}
+<div class="card empty">
+    <i class="fa-solid fa-box-open"></i>
+    <h2>No orders yet</h2>
+    <p>When you place an order it will show up here.</p>
+    <a class="btn btn-lg" href="{{ url_for('products.explore') }}">Start shopping</a>
+</div>
+{% endfor %}
+{% endblock %}

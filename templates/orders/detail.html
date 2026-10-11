@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import csrf, status_pill %}
+
+{% block title %}Order {{ order.reference }} - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb"><a href="{{ url_for('index') }}">Home</a><span class="sep">/</span><a href="{{ url_for('orders.order_list') }}">Orders</a><span class="sep">/</span><span>{{ order.reference }}</span></nav>
+
+<div class="two-col">
+    <div>
+        <div class="card" style="margin-bottom:16px">
+            <div class="dash-head">
+                <h1>Order {{ order.reference }}</h1>
+                {{ status_pill(order.status) }}
+            </div>
+            {% if order.status == 'cancelled' %}
+                <div class="cancelled-banner"><i class="fa-solid fa-ban"></i> This order was cancelled.</div>
+            {% else %}
+                {% set reached = steps.index(order.status) %}
+                <div class="tracker">
+                    {% for s in steps %}
+                        <div class="step {{ 'done' if loop.index0 <= reached }}">
+                            <div class="dot">{% if loop.index0 <= reached %}<i class="fa-solid fa-check"></i>{% endif %}</div>
+                            {{ s|capitalize }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h3>Items</h3>
+            {% for item in order.items %}
+            <div class="cart-line">
+                <a class="img" href="{{ url_for('products.product_detail', product_id=item.product_id) }}">
+                    {% if item.product.image_url %}<img src="{{ item.product.image_url }}" alt="">{% endif %}
+                </a>
+                <div>
+                    <a href="{{ url_for('products.product_detail', product_id=item.product_id) }}"><strong>{{ item.product.name }}</strong></a>
+                    <div class="muted small">Qty {{ item.quantity }} &times; {{ item.price|naira }} (price at purchase)</div>
+                    {% if order.status == 'delivered' %}
+                        <a class="small" href="{{ url_for('products.product_detail', product_id=item.product_id) }}#reviews"><i class="fa-regular fa-star"></i> Rate this product</a>
+                    {% endif %}
+                </div>
+                <strong class="line-total">{{ (item.price * item.quantity)|naira }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <aside>
+        <div class="card summary" style="margin-bottom:16px">
+            <h3>Order summary</h3>
+            <div class="line"><span>Placed on</span><span>{{ order.created_at.strftime('%d %b %Y, %H:%M') if order.created_at }}</span></div>
+            <div class="line"><span>Payment</span><span>Pay on delivery</span></div>
+            <div class="line total"><span>Total</span><span>{{ order.total|naira }}</span></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+            <h3>Delivery address</h3>
+            <p style="margin:0"><strong>{{ order.shipping_name }}</strong><br>{{ order.shipping_address }}<br>{{ order.shipping_city }}<br>{{ order.shipping_phone }}</p>
+        </div>
+        {% if order.can_cancel %}
+        <form method="POST" action="{{ url_for('orders.order_cancel', order_id=order.id) }}" data-confirm="Cancel this order?">
+            {{ csrf() }}
+            <button type="submit" class="btn btn-danger btn-block"><i class="fa-solid fa-ban"></i> Cancel order</button>
+        </form>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

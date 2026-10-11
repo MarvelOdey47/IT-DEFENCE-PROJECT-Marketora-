@@ -1,0 +1,27 @@
+{% extends "auth_base.html" %}
+{% from "partials/macros.html" import field with context %}
+
+{% block title %}Create Account - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <form method="POST" class="form-card" novalidate>
+        {{ form.hidden_tag() }}
+        <h1>Create your account</h1>
+        <p class="lead">Shop as a customer, or open a store and start selling.</p>
+
+        <div class="role-tabs" role="radiogroup" aria-label="Register as">
+            {% for value, label in form.role.choices %}
+                <label><input type="radio" name="role" value="{{ value }}" {{ 'checked' if form.role.data == value }}>{{ label }}</label>
+            {% endfor %}
+        </div>
+
+        {{ field(form.username, placeholder='Choose a username', autocomplete='username') }}
+        {{ field(form.email, placeholder='you@example.com', autocomplete='email') }}
+        {{ field(form.password, placeholder='At least 6 characters', autocomplete='new-password') }}
+        {{ field(form.confirm_password, placeholder='Repeat your password', autocomplete='new-password') }}
+        <button type="submit" class="btn btn-lg btn-block"><i class="fa-solid fa-user-plus"></i> Create account</button>
+        <p class="auth-foot">Already have an account? <a href="{{ url_for('auth.login', role=form.role.data) }}">Sign in</a></p>
+    </form>
+</div>
+{% endblock %}

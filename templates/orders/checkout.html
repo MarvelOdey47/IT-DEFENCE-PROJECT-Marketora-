@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import field with context %}
+
+{% block title %}Checkout - {{ BRAND }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title"><i class="fa-solid fa-lock" style="color:var(--accent)"></i> Checkout</h1>
+
+<div class="two-col">
+    <form method="POST" class="form-card" novalidate>
+        {{ form.hidden_tag() }}
+        <h2>Delivery details</h2>
+        <p class="lead">Where should we deliver your order? Payment is made on delivery.</p>
+        <div class="form-grid">
+            {{ field(form.full_name) }}
+            {{ field(form.phone, placeholder='e.g. 08012345678') }}
+            {{ field(form.address, cls='full', placeholder='House number, street, area') }}
+            {{ field(form.city, placeholder='e.g. Lagos') }}
+        </div>
+        <div class="flash info"><i class="fa-solid fa-hand-holding-dollar"></i><span>Pay on delivery - no online payment needed for this demo.</span></div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-lg"><i class="fa-solid fa-check"></i> Place order</button>
+            <a class="btn btn-lg btn-ghost" href="{{ url_for('cart.cart_view') }}">Back to cart</a>
+        </div>
+    </form>
+
+    <aside class="card summary">
+        <h3>Order summary</h3>
+        {% for item in items %}
+            <div class="line"><span>{{ item.product.name[:34] }} &times; {{ item.quantity }}</span><span>{{ (item.product.price * item.quantity)|naira }}</span></div>
+        {% endfor %}
+        <div class="line total"><span>Total</span><span>{{ total|naira }}</span></div>
+    </aside>
+</div>
+{% endblock %}

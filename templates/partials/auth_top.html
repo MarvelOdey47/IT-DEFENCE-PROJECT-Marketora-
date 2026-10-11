@@ -1,0 +1,10 @@
+<header class="auth-top">
+    <a class="logo" href="{{ url_for('index') }}"><span class="logo-mark"><i class="fa-solid fa-store"></i></span>{{ BRAND }}</a>
+    <div class="auth-top-right">
+        <a href="{{ url_for('index') }}" class="small"><i class="fa-solid fa-arrow-left"></i> Back to store</a>
+        <button type="button" class="icon-btn theme-btn" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle theme">
+            <i class="fa-regular fa-moon icon-moon"></i>
+            <i class="fa-regular fa-sun icon-sun"></i>
+        </button>
+    </div>
+</header>

@@ -1,0 +1,44 @@
+{% extends "dashboard_base.html" %}
+{% from "partials/macros.html" import avatar, csrf with context %}
+
+{% block title %}My Profile - {{ BRAND }}{% endblock %}
+
+{% block dash %}
+<div class="dash-head"><h1>My profile</h1></div>
+
+<div class="panel">
+    <header><h2>Profile picture</h2></header>
+    <div class="body profile-row">
+        {{ avatar(current_user, 110) }}
+        <div class="profile-actions">
+            <p class="muted small" style="margin-top:0">PNG, JPG, WEBP or GIF, up to 2 MB. If you do not add one, a default icon is shown.</p>
+            <form method="POST" enctype="multipart/form-data" class="avatar-form">
+                {{ csrf() }}
+                <label class="btn btn-outline btn-sm" for="avatar-file"><i class="fa-solid fa-camera"></i> Choose image</label>
+                <input type="file" id="avatar-file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" required>
+                <span class="muted small" id="avatar-name">No file chosen</span>
+                <button type="submit" class="btn btn-sm"><i class="fa-solid fa-upload"></i> Upload</button>
+            </form>
+            {% if current_user.avatar_url %}
+            <form method="POST" class="inline-form" data-confirm="Remove your profile picture?" style="margin-top:10px">
+                {{ csrf() }}
+                <input type="hidden" name="action" value="remove">
+                <button type="submit" class="link-danger"><i class="fa-solid fa-trash"></i> Remove picture</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <header><h2>Account details</h2></header>
+    <div class="body">
+        <table class="spec-table">
+            <tr><th>Username</th><td>{{ current_user.username }}</td></tr>
+            <tr><th>Email</th><td>{{ current_user.email }}</td></tr>
+            <tr><th>Account type</th><td><span class="pill {{ current_user.role }}">{{ current_user.role }}</span></td></tr>
+            <tr><th>Member since</th><td>{{ current_user.created_at.strftime('%d %b %Y') if current_user.created_at }}</td></tr>
+        </table>
+    </div>
+</div>
+{% endblock %}
