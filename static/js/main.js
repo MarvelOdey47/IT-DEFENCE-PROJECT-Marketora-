@@ -342,6 +342,27 @@
     $$('.product-card .thumb img').forEach(function (img) { if (img.complete) markLoaded(img); });
     $$('.product-card .thumb').forEach(function (t) { if (!t.querySelector('img')) t.classList.add('loaded'); });
 
+    /* ---------- show / hide password on every password field ---------- */
+    $$('input[type="password"]').forEach(function (input) {
+        if (input.closest('.pw-wrap')) return;
+        const wrap = document.createElement('span');
+        wrap.className = 'pw-wrap';
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'pw-toggle';
+        btn.setAttribute('aria-label', 'Show password');
+        btn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        btn.addEventListener('click', function () {
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            btn.innerHTML = '<i class="fa-regular ' + (show ? 'fa-eye-slash' : 'fa-eye') + '"></i>';
+        });
+        wrap.appendChild(btn);
+    });
+
     /* ---------- profile picture chooser ---------- */
     const avatarInput = $('#avatar-file');
     if (avatarInput) {
